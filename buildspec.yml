@@ -1,0 +1,40 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - echo Installing Node.js 22.11.0...
+      - curl --version || echo "curl not found; ensure environment has curl"
+      - curl -fsSL https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-x64.tar.xz | tar -xJ -C /usr/local --strip-components=1
+      - node --version
+      - npm --version
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region ap-northeast-3 | docker login --username AWS --password-stdin 124355663661.dkr.ecr.ap-northeast-3.amazonaws.com
+  build:
+    commands:
+      - echo Build started...
+      - echo Checking repository contents...
+      - ls -la
+      - echo Checking package.json...
+      - cat package.json || echo "package.json not found"
+      - echo Removing node_modules and package-lock.json if present...
+      - rm -rf node_modules/ package-lock.json
+      - echo Running npm install...
+      - npm install
+      - echo Checking environment variables...
+      - echo REACT_APP_API_URL_IDEA=$REACT_APP_API_URL_IDEA
+      - echo REACT_APP_API_URL_COMMENT=$REACT_APP_API_URL_COMMENT
+      - echo REACT_APP_API_URL_USER=$REACT_APP_API_URL_USER
+      - echo REACT_APP_API_URL_MESSAGE=$REACT_APP_API_URL_MESSAGE
+      - echo Running docker build...
+      - docker build --build-arg REACT_APP_API_URL_IDEA="$REACT_APP_API_URL_IDEA" --build-arg REACT_APP_API_URL_COMMENT="$REACT_APP_API_URL_COMMENT" --build-arg REACT_APP_API_URL_USER="$REACT_APP_API_URL_USER" --build-arg REACT_APP_API_URL_MESSAGE="$REACT_APP_API_URL_MESSAGE" -t 124355663661.dkr.ecr.ap-northeast-3.amazonaws.com/g2-frontend-cp:test .
+  post_build:
+    commands:
+      - echo Pushing Docker image to ECR...
+      - docker push 124355663661.dkr.ecr.ap-northeast-3.amazonaws.com/g2-frontend-cp:test
+      - echo Writing image definitions file...
+      - printf '[{"name":"frontend-container","imageUri":"%s"}]' 124355663661.dkr.ecr.ap-northeast-3.amazonaws.com/g2-frontend-cp:test > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
