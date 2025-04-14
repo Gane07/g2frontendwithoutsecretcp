@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: group2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: 124355663661.dkr.ecr.ap-northeast-3.amazonaws.com/g2/shareidea:frontendv10
+        ports:
+        - containerPort: 3000
+      restartPolicy: Always
